@@ -18,6 +18,18 @@
     monthpicker: false,
     quarterpicker: false,
     /**
+    *
+    * @param path
+    */
+    getURL: function(inst, path) {
+        var url = inst.settings.url;
+        url = $.isFunction(url) ? url.call(inst, path) : (url || '');
+        if (-1 == url.indexOf('#')) {
+            url += '#';
+        }
+        return url;
+    },
+    /**
     * @public
     * @description      validate leap year
     * @param{String}    yyyy
@@ -279,7 +291,7 @@
               selected = current && num == current.getMonth() && inst.mqYear == current.getFullYear();
 
           tbody += ((!minDate || date.getTime() >= minDate.getTime()) && (!maxDate || date.getTime() <= maxDate.getTime())) ? 
-                   '<td class="' + (selected ? ' ui-datepicker-current-day' : '') + '"><a class="ui-state-default' + (selected ? ' ui-state-active' : '') + '" href="#" title="' + dateString + '">' + jMonth.monthNamesShort[num] + '</a>' : 
+                   '<td class="' + (selected ? ' ui-datepicker-current-day' : '') + '"><a class="ui-state-default' + (selected ? ' ui-state-active' : '') + '" href="'+ this.getURL(inst, dateString) +'" title="' + dateString + '">' + jMonth.monthNamesShort[num] + '</a>' :
                    '<td class="ui-datepicker-unselectable ui-state-disabled"><span class="ui-state-default" title="' + dateString + '">' + jMonth.monthNamesShort[num] + '</span>';
           tbody += '</td>';
         }
