@@ -193,6 +193,7 @@
       var $tbody = $(tbody);
       $tbody.find("a.ui-state-default").click(function() {
         obj.__selectQuarter(inst, $(this), obj);
+        return false;
       });
       $html.find("table").css("marginTop", "5px").children('tbody').append($tbody);
       return $html.children();
@@ -300,6 +301,7 @@
       var $tbody = $(tbody);
       $tbody.find("a.ui-state-default").click(function() {
         obj.__selectMonth(inst, $(this), obj);
+        return false;
       });
       $html.find("table").css("marginTop", "5px").children('tbody').append($tbody);
       return $html.children();
