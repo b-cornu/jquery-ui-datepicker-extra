@@ -13,10 +13,12 @@
   * @example
   *   for monthpicker, set "monthpicker" as true
   *   for quarterpicker, set "quarterpicker" as true
+  *   for yearpicker, set "yearpicker" as true
   */
   $.extend(true, $.datepicker, {
     monthpicker: false,
     quarterpicker: false,
+    yearpicker: false,
     /**
     *
     * @param path
@@ -362,6 +364,120 @@
   });
 
   /**
+  * @description extend for yearpicker
+  */
+  $.extend(true, $.datepicker, {
+    /**
+    * @description generate yearpicker header
+    */
+    __generateYearsHeader: function(inst, obj) {
+      start_year = parseInt(inst.mqYear/12)*12
+      end_year = start_year + 11
+      return '<div class="ui-datepicker-title"><span class="ui-datepicker-year-header">' + start_year + "-" + end_year + '</span></div>';
+    },
+
+    /**
+    * @description generate yearpicker html structure
+    */
+    __buildYearView: function(inst, obj) {
+      var $html = $('<div class="ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all" />'),
+          drawYear = inst.mqYear || inst.drawYear,
+          minDate = obj._getMinMaxDate(inst, 'min'),
+          maxDate = obj._getMinMaxDate(inst, 'max'),
+          selected = inst.input.val(),
+          current = selected == '' ? new Date() : new Date(selected)
+
+      if(minDate) {
+        minDate = new Date(minDate.setDate(1));
+        minDate = new Date(minDate.setMonth(Math.floor(minDate.getMonth() / 3) * 3));
+      }
+
+      if(!inst.mqYear) {
+        inst.mqYear = inst.drawYear;
+      }
+
+      var $prev = $('<a class="ui-datepicker-prev ui-corner-all ' + (obj.__canAdjustYear(-1, inst, minDate) ? '' : 'ui-state-disabled') + '" title="prev"><span class="ui-icon ui-icon-circle-triangle-w">Prev</span></a>'),
+          $next = $('<a class="ui-datepicker-next ui-corner-all ' + (obj.__canAdjustYear(1, inst, maxDate) ? '' : 'ui-state-disabled') + '" title="next"><span class="ui-icon ui-icon-circle-triangle-e">Next</span></a>');
+
+      $prev.not(".ui-state-disabled").click(function() {
+        obj.__adjustYear(inst, -1, obj);
+      });
+
+      $next.not(".ui-state-disabled").click(function(){
+        obj.__adjustYear(inst, 1, obj);
+      });
+
+      $html.append($prev);
+      $html.append($next);
+      $html.append(obj.__generateYearsHeader(inst, obj));
+
+      $html = $("<div/>").append($html).append('<table class="ui-datepicker-calendar ui-fwpicker-calendar"><tbody></tbody></table>');
+
+      var tbody = '<tr>';
+
+      for(var r = 0; r < 3; r++) {
+        tbody += '<tr>';
+        for(var c = 0; c < 4; c++) {
+          var num = parseInt(inst.mqYear/12)*12 + c + 4*r,
+              fixNum = num + 1,
+              dateString = '01/01/' + num,
+              date = new Date(dateString),
+              selected = current && date.getFullYear() == current.getFullYear();
+
+          tbody += ((!minDate || date.getTime() >= minDate.getTime()) && (!maxDate || date.getTime() <= maxDate.getTime())) ? 
+                   '<td class="' + (selected ? ' ui-datepicker-current-day' : '') + '"><a class="ui-state-default' + (selected ? ' ui-state-active' : '') + '" href="'+ this.getURL(inst, dateString) +'" title="' + dateString + '">' + num + '</a>' :
+                   '<td class="ui-datepicker-unselectable ui-state-disabled"><span class="ui-state-default" title="' + dateString + '">' + dateString + '</span>';
+          tbody += '</td>';
+        }
+        tbody += '</tr>';
+      }
+
+      tbody += '</tr>';
+      var $tbody = $(tbody);
+      $tbody.find("a.ui-state-default").click(function() {
+        obj.__selectYear(inst, $(this), obj);
+        return false;
+      });
+      $html.find("table").css("marginTop", "5px").children('tbody').append($tbody);
+      return $html.children();
+    },
+    /**
+    * @description update to show yearpicker
+    */
+    __updateYearpicker: function(inst, obj) {
+      inst.dpDiv.empty().unbind('mouseover').append(obj.__buildYearView(inst, obj));
+    },
+    /**
+    * @description jump to other year
+    * @param{Interger} offset -1 means prev, 1 means next
+    */
+    __adjustYear: function(inst, offset, obj) { // For Prev & Next Click
+      inst.mqYear += offset*12;
+      obj.__updateYearpicker(inst, obj);
+    },
+    /**
+    * @description when user select a year will trigger this method, it will update state of picker and set value in trigger "input" field
+    */
+    __selectYear: function(inst, $obj, obj) {
+      var val = $obj.attr("title"),
+          eventSelect = obj._get(inst, 'onSelect');
+      
+      if(obj._get(inst, 'lastDay')) {
+        val = val.split('/');
+        val = '12/31/' + val[2];
+      }
+
+      inst.input.val(val);
+      
+      if (eventSelect)
+        eventSelect.apply(inst.input, [val, inst]);
+      obj._hideDatepicker();
+      obj._lastInput = null;
+    }
+  });
+
+
+  /**
   * @description store for original datepicker methods
   */
   $.extend(true, $.datepicker, {
@@ -378,11 +494,15 @@
     _updateDatepicker: function(inst) {
       var self = this;
       var abc = new Date().getTime();
+
       if(self._get(inst, 'monthpicker')) {
         $.datepicker.__updateMonthpicker(inst, self);
       }
       else if(self._get(inst, 'quarterpicker')) {
         $.datepicker.__updateQuarterpicker(inst, self);
+      }
+      else if(self._get(inst, 'yearpicker')) {
+        $.datepicker.__updateYearpicker(inst, self);
       }
       else {
         $.datepicker._originalUpdateDatepicker(inst);
@@ -405,6 +525,9 @@
       }
       else if(self._get(inst, 'quarterpicker')) {
         $.datepicker.__adjustQuarter(inst, offset, self);
+      }
+      else if(self._get(inst, 'yearpicker')) {
+        $.datepicker.__adjustYear(inst, offset, self);
       }
       else {
         return $.datepicker._originalAdjustDate(id, offset, period);

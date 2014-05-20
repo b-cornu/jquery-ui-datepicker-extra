@@ -876,7 +876,6 @@ $.extend(Datepicker.prototype, {
 			onClose = this._get(inst, "onClose");
 			if (onClose) {
 				onClose.apply((inst.input ? inst.input[0] : null), [(inst.input ? inst.input.val() : ""), inst]);
-				console.log('jjjqwqweqwe')
 			}
 
 			this._lastInput = null;
@@ -888,7 +887,6 @@ $.extend(Datepicker.prototype, {
 				}
 			}
 			this._inDialog = false;
-			console.log('_hideDatepicker')
 		}
 	},
 

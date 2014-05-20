@@ -88,5 +88,23 @@
         });
       });
     </script>
+
+    <h3>Year Picker</h3>
+    <div id="quarter">
+      <input type="text" id="yearpicker1" />
+      <input type="text" id="yearpicker2" />
+    </div>
+    
+    <script>
+      $(function() {
+        $("#yearpicker1").datepicker({
+          yearpicker: true
+        });
+        $("#yearpicker2").datepicker({
+          yearpicker: true,
+          lastDay: true
+        });
+      });
+    </script>
   </body>
 </html>
