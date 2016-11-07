@@ -202,13 +202,23 @@
         return false;
       });
       $html.find("table").css("marginTop", "5px").children('tbody').append($tbody);
-      return $html.children();
+          if(inst.settings.changeYear){
+            return $html.children()[1];
+          }else{
+            return $html.children();
+          }
     },
     /**
     * @description update to show quarterpicker
     */
     __updateQuarterpicker: function(inst, obj) {
-      inst.dpDiv.empty().unbind('mouseover').append(obj.__buildQuarterView(inst, obj));
+      if(inst.settings.changeYear){
+          $(inst.dpDiv.children()[1]).remove();
+          inst.dpDiv.append(obj.__buildQuarterView(inst, obj));
+          $(inst.dpDiv.children()[0]).find("a.ui-datepicker-prev.ui-corner-all, a.ui-datepicker-next.ui-corner-all, span.ui-datepicker-month").remove();
+        }else{
+          inst.dpDiv.empty().unbind('mouseover').append(obj.__buildQuarterView(inst, obj));
+        } 
     },
     /**
     * @description jump to other year
@@ -266,7 +276,7 @@
           }
 
           var $prev = $('<a class="ui-datepicker-prev ui-corner-all ' + (obj.__canAdjustYear(-1, inst, minDate) ? '' : 'ui-state-disabled') + '" title="prev"><span class="ui-icon ui-icon-circle-triangle-w">Prev</span></a>'),
-              $next = $('<a class="ui-datepicker-next ui-corner-all ' + (obj.__canAdjustYear(1, inst, maxDate) ? '' : 'ui-state-disabled') + '" title="next"><span class="ui-icon ui-icon-circle-triangle-e">Next</span></a>');
+             $next = $('<a class="ui-datepicker-next ui-corner-all ' + (obj.__canAdjustYear(1, inst, maxDate) ? '' : 'ui-state-disabled') + '" title="next"><span class="ui-icon ui-icon-circle-triangle-e">Next</span></a>');
 
           $prev.not(".ui-state-disabled").click(function () {
               obj.__adjustSemester(inst, -1, obj);
@@ -301,13 +311,24 @@
               return false;
           });
           $html.find("table").css("marginTop", "5px").children('tbody').append($tbody);
-          return $html.children();
+
+		      if(inst.settings.changeYear){
+            return $html.children()[1];
+		      }else{
+            return $html.children();
+		      }
       },
       /**
       * @description update to show semesterpicker
       */
       __updateSemesterpicker: function (inst, obj) {
+		    if(inst.settings.changeYear){
+          $(inst.dpDiv.children()[1]).remove();
+          inst.dpDiv.append(obj.__buildSemesterView(inst, obj));
+		      $(inst.dpDiv.children()[0]).find("a.ui-datepicker-prev.ui-corner-all, a.ui-datepicker-next.ui-corner-all, span.ui-datepicker-month").remove();
+		    }else{
           inst.dpDiv.empty().unbind('mouseover').append(obj.__buildSemesterView(inst, obj));
+		    }		  
       },
       /**
       * @description jump to other year
@@ -409,13 +430,24 @@
         return false;
       });
       $html.find("table").css("marginTop", "5px").children('tbody').append($tbody);
-      return $html.children();
+      if(inst.settings.changeYear){
+        return $html.children()[1];
+      }else{
+        return $html.children();
+      }
     },
     /**
     * @description update to show monthpicker
     */
     __updateMonthpicker: function(inst, obj) {
-      inst.dpDiv.empty().unbind('mouseover').append(obj.__buildMonthView(inst, obj));
+      if(inst.settings.changeYear){
+        $(inst.dpDiv.children()[1]).remove();
+        inst.dpDiv.append(obj.__buildMonthView(inst, obj));
+        $(inst.dpDiv.children()[0]).find("a.ui-datepicker-prev.ui-corner-all, a.ui-datepicker-next.ui-corner-all, span.ui-datepicker-month").remove();
+      }else{
+        inst.dpDiv.empty().unbind('mouseover').append(obj.__buildMonthView(inst, obj));
+      } 
+      
     },
     /**
     * @description validate whether user can jump to target year
@@ -599,13 +631,22 @@
       var abc = new Date().getTime();
 
       if(self._get(inst, 'monthpicker')) {
-        $.datepicker.__updateMonthpicker(inst, self);
+		    if(inst.settings.changeYear){
+          $.datepicker._originalUpdateDatepicker(inst);
+		    }	 
+		    $.datepicker.__updateMonthpicker(inst, self);
       }
       else if (self._get(inst, 'quarterpicker')) {
-          $.datepicker.__updateQuarterpicker(inst, self);
+	      if(inst.settings.changeYear){
+          $.datepicker._originalUpdateDatepicker(inst);
+        }  
+        $.datepicker.__updateQuarterpicker(inst, self);
       }
       else if (self._get(inst, 'semesterpicker')) {
-          $.datepicker.__updateSemesterpicker(inst, self);
+        if(inst.settings.changeYear){
+          $.datepicker._originalUpdateDatepicker(inst);
+        }  
+		    $.datepicker.__updateSemesterpicker(inst, self);
       }
       else if(self._get(inst, 'yearpicker')) {
         $.datepicker.__updateYearpicker(inst, self);
@@ -644,12 +685,12 @@
     },
     _canAdjustMonth: function(inst, offset, curYear, curMonth) {
       var self = this;
-      if (self._get(inst, 'monthpicker') || self._get(inst, 'quarterpicker') || self._get(inst, 'semesterpicker')) {
-        return $.datepicker.__canAdjustYear(inst, offset, curYear, curMonth, self);
-      }
-      else {
+      //if (self._get(inst, 'monthpicker') || self._get(inst, 'quarterpicker') ) {
+      //  return $.datepicker.__canAdjustYear(inst, offset, curYear, curMonth, self);
+      //}
+      //else {
         return $.datepicker._originalCanAdjustMonth(inst, offset, curYear, curMonth);
-      }
+      //}
     }
   });
 })(jQuery);
