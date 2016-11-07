@@ -241,6 +241,8 @@
         val = val[0] + '/' + (32 - new Date(val[2], val[0] - 1, 32).getDate()) + '/' + val[2];
       }
 
+      var dateFormat = this._get(inst, 'dateFormat');
+      val = this.formatDate(dateFormat, new Date(val.split('/')[2], val.split('/')[0] - 1, 1));
       inst.input.val(val);
       
       if (eventSelect)
@@ -350,7 +352,8 @@
               val[0] = Math.floor(val[0] / 6) * 6 + 6;
               val = val[0] + '/' + (32 - new Date(val[2], val[0] - 1, 32).getDate()) + '/' + val[2];
           }
-
+          var dateFormat = this._get(inst, 'dateFormat');
+          val = this.formatDate(dateFormat, new Date(val.split('/')[2], val.split('/')[0] - 1, 1));
           inst.input.val(val);
 
           if (eventSelect)
@@ -489,6 +492,8 @@
         val = (val[0] + '/' + (32 - new Date(val[2], val[0] - 1, 32).getDate()) + '/' + val[2]);
       }
 
+      var dateFormat = this._get(inst, 'dateFormat');
+      val = this.formatDate(dateFormat, new Date(val.split('/')[2], val.split('/')[0] - 1, 1));
       inst.input.val(val);
       
       if (eventSelect)
