@@ -1,6 +1,6 @@
 /**
 * @description  
-*   extends $.datepicker for fw requirements, include week, month, quarter
+*   extends $.datepicker for fw requirements, include week, month, quarter, half year
 * @extends          $.datepicekr
 * @requires         @.datepicker
 */
@@ -10,14 +10,18 @@
   * @description    This block is extend for date selectable range
   * @param{Boolean}   monthpicker   Default value is false, trigger to show monthpicker
   * @param{Boolean}   quarterpicker Default value is false, trigger to show quarterpicker
+  * @param{Boolean}   yearpicker Default value is false, trigger to show yearpicker
+  * @param{Boolean}   semesterpicker Default value is false, trigger to show semesterpicker
   * @example
   *   for monthpicker, set "monthpicker" as true
   *   for quarterpicker, set "quarterpicker" as true
   *   for yearpicker, set "yearpicker" as true
+  *   for semeester, set "semester" as true
   */
   $.extend(true, $.datepicker, {
     monthpicker: false,
     quarterpicker: false,
+    semesterpicker: false,
     yearpicker: false,
     /**
     *
@@ -237,11 +241,110 @@
   });
 
   /**
+  * @description extend for semesterpicker
+  */
+  $.extend(true, $.datepicker, {
+      /**
+      * @description generate semester picker html structure
+      */
+      __buildSemesterView: function (inst, obj) {
+          var $html = $('<div class="ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all" />'),
+              drawYear = inst.mqYear || inst.drawYear,
+              minDate = obj._getMinMaxDate(inst, 'min'),
+              maxDate = obj._getMinMaxDate(inst, 'max'),
+              selected = inst.input.val(),
+              current = selected == '' ? false : new Date(selected),
+              semesterName = ['S1', 'S2'];
+
+          if (minDate) {
+              minDate = new Date(minDate.setDate(1));
+              minDate = new Date(minDate.setMonth(Math.floor(minDate.getMonth() / 6) * 6));
+          }
+
+          if (!inst.mqYear) {
+              inst.mqYear = inst.drawYear;
+          }
+
+          var $prev = $('<a class="ui-datepicker-prev ui-corner-all ' + (obj.__canAdjustYear(-1, inst, minDate) ? '' : 'ui-state-disabled') + '" title="prev"><span class="ui-icon ui-icon-circle-triangle-w">Prev</span></a>'),
+              $next = $('<a class="ui-datepicker-next ui-corner-all ' + (obj.__canAdjustYear(1, inst, maxDate) ? '' : 'ui-state-disabled') + '" title="next"><span class="ui-icon ui-icon-circle-triangle-e">Next</span></a>');
+
+          $prev.not(".ui-state-disabled").click(function () {
+              obj.__adjustSemester(inst, -1, obj);
+          });
+
+          $next.not(".ui-state-disabled").click(function () {
+              obj.__adjustSemester(inst, 1, obj);
+          });
+
+          $html.append($prev);
+          $html.append($next);
+          $html.append(obj.__generateYearHeader(inst, obj));
+
+          $html = $("<div/>").append($html).append('<table class="ui-datepicker-calendar ui-fwpicker-calendar"><tbody></tbody></table>');
+          var tbody = '<tr>';
+          for (var c = 0; c < 2; c++) {
+              var num = c * 6,
+                  fixNum = num + 1,
+                  dateString = (fixNum < 10 ? ('0' + fixNum) : fixNum) + '/01/' + inst.mqYear,
+                  date = new Date(dateString),
+                  selected = current && num <= current.getMonth() && (num + 3) > current.getMonth() && inst.mqYear == current.getFullYear();
+
+              tbody += ((!minDate || date.getTime() >= minDate.getTime()) && (!maxDate || date.getTime() <= maxDate.getTime())) ?
+                       '<td class="' + (selected ? ' ui-datepicker-current-day' : '') + '"><a class="ui-state-default' + (selected ? ' ui-state-active' : '') + '" href="#" title="' + dateString + '">' + semesterName[c] + '</a>' :
+                       '<td class="ui-datepicker-unselectable ui-state-disabled"><span class="ui-state-default" title="' + dateString + '">' + semesterName[c] + '</span>';
+              tbody += '</td>';
+          }
+          tbody += '</tr>';
+          var $tbody = $(tbody);
+          $tbody.find("a.ui-state-default").click(function () {
+              obj.__selectSemester(inst, $(this), obj);
+              return false;
+          });
+          $html.find("table").css("marginTop", "5px").children('tbody').append($tbody);
+          return $html.children();
+      },
+      /**
+      * @description update to show semesterpicker
+      */
+      __updateSemesterpicker: function (inst, obj) {
+          inst.dpDiv.empty().unbind('mouseover').append(obj.__buildSemesterView(inst, obj));
+      },
+      /**
+      * @description jump to other year
+      * @param{Interger} offset -1 means prev, 1 means next
+      */
+      __adjustSemester: function (inst, offset, obj) { // For Prev & Next Click
+          inst.mqYear += offset;
+          obj.__updateSemesterpicker(inst, obj);
+      },
+      /**
+      * @description when user select a semester will trigger this method, it will update state of picker and set value in trigger "input" field
+      */
+      __selectSemester: function (inst, $obj, obj) {
+          var val = $obj.attr("title"),
+              eventSelect = obj._get(inst, 'onSelect');
+
+          if (obj._get(inst, 'lastDay')) {
+              val = val.split('/');
+              val[0] = Math.floor(val[0] / 6) * 6 + 6;
+              val = val[0] + '/' + (32 - new Date(val[2], val[0] - 1, 32).getDate()) + '/' + val[2];
+          }
+
+          inst.input.val(val);
+
+          if (eventSelect)
+              eventSelect.apply(inst.input, [val, inst]);
+          obj._hideDatepicker();
+          obj._lastInput = null;
+      }
+  });
+
+  /**
   * @description extend for monthpicker
   */
   $.extend(true, $.datepicker, {
     /**
-    * @description generate monthpicker or quarterpicker year header
+    * @description generate monthpicker, quarterpicker, semesterpicker year  header
     */
     __generateYearHeader: function(inst, obj) {
       return '<div class="ui-datepicker-title"><span class="ui-datepicker-year-header">' + inst.mqYear + '</span></div>';
@@ -498,8 +601,11 @@
       if(self._get(inst, 'monthpicker')) {
         $.datepicker.__updateMonthpicker(inst, self);
       }
-      else if(self._get(inst, 'quarterpicker')) {
-        $.datepicker.__updateQuarterpicker(inst, self);
+      else if (self._get(inst, 'quarterpicker')) {
+          $.datepicker.__updateQuarterpicker(inst, self);
+      }
+      else if (self._get(inst, 'semesterpicker')) {
+          $.datepicker.__updateSemesterpicker(inst, self);
       }
       else if(self._get(inst, 'yearpicker')) {
         $.datepicker.__updateYearpicker(inst, self);
@@ -523,8 +629,11 @@
       if(self._get(inst, 'monthpicker')) {
         return $.datepicker.__adjustMonth(inst, offset, self);
       }
-      else if(self._get(inst, 'quarterpicker')) {
-        $.datepicker.__adjustQuarter(inst, offset, self);
+      else if (self._get(inst, 'quarterpicker')) {
+          $.datepicker.__adjustQuarter(inst, offset, self);
+      }
+      else if (self._get(inst, 'semesterpicker')) {
+          $.datepicker.__adjustSemester(inst, offset, self);
       }
       else if(self._get(inst, 'yearpicker')) {
         $.datepicker.__adjustYear(inst, offset, self);
@@ -535,7 +644,7 @@
     },
     _canAdjustMonth: function(inst, offset, curYear, curMonth) {
       var self = this;
-      if(self._get(inst, 'monthpicker') || self._get(inst, 'quarterpicker')) {
+      if (self._get(inst, 'monthpicker') || self._get(inst, 'quarterpicker') || self._get(inst, 'semesterpicker')) {
         return $.datepicker.__canAdjustYear(inst, offset, curYear, curMonth, self);
       }
       else {
