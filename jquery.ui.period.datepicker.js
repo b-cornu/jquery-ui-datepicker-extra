@@ -606,7 +606,9 @@
         val = val.split('/');
         val = '12/31/' + val[2];
       }
-
+	
+       var dateFormat = this._get(inst, 'dateFormat');
+      val = this.formatDate(dateFormat, new Date(val.split('/')[2], val.split('/')[0] - 1, 1));
       inst.input.val(val);
       
       if (eventSelect)
